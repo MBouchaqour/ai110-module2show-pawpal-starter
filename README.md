@@ -1,3 +1,12 @@
+## Smarter Scheduling
+
+PawPal+ now includes several advanced scheduling features:
+
+- **Task Sorting by Time:** Tasks are sorted chronologically for a clearer daily plan.
+- **Filtering:** Tasks can be filtered by completion status or by pet name.
+- **Recurring Tasks:** When a daily or weekly task is marked complete, a new instance is automatically created for the next occurrence, with the due date set appropriately.
+- **Conflict Detection:** The scheduler detects and warns about tasks scheduled at the exact same time (for the same or different pets), helping avoid accidental overlaps.
+- **Lightweight Design:** Conflict detection is efficient, checking only for exact time matches rather than overlapping durations, which keeps the app fast and simple for typical pet care scenarios.
 # PawPal+ (Module 2 Project)
 
 You are building **PawPal+**, a Streamlit app that helps a pet owner plan care tasks for their pet.

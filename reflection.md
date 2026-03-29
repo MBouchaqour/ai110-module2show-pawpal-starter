@@ -140,3 +140,4 @@ The changes were made to:
 **c. Key takeaway**
 
 - What is one important thing you learned about designing systems or working with AI on this project?
+- One tradeoff in the current scheduler is that it only checks for exact time matches (tasks with the same start_time and due_date) when detecting conflicts, rather than checking for overlapping durations. This means that if two tasks overlap in time but do not start at the exact same minute, the conflict will not be detected. This approach is lightweight and efficient, but may miss some real-world scheduling conflicts. For this project, this tradeoff is reasonable because it keeps the logic simple and fast, and most pet care tasks are unlikely to have complex overlaps in a typical household scenario.

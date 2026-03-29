@@ -31,7 +31,7 @@ if __name__ == "__main__":
         owner_id="O001"
     )
 
-    # Create tasks
+    # Create tasks out of order and with start_time
     task1 = Task(
         task_id="T001",
         name="Morning Walk",
@@ -39,7 +39,8 @@ if __name__ == "__main__":
         priority="HIGH",
         task_type="WALK",
         owner_id="O001",
-        pet_id="P001"
+        pet_id="P001",
+        start_time="08:30"
     )
 
     task2 = Task(
@@ -49,7 +50,8 @@ if __name__ == "__main__":
         priority="MEDIUM",
         task_type="FEED",
         owner_id="O001",
-        pet_id="P001"
+        pet_id="P001",
+        start_time="07:00"
     )
 
     task3 = Task(
@@ -59,19 +61,78 @@ if __name__ == "__main__":
         priority="LOW",
         task_type="GROOMING",
         owner_id="O001",
-        pet_id="P002"
+        pet_id="P002",
+        start_time="09:15"
     )
 
-    # Create a schedule
+    # Add two tasks at the same time to test conflict detection
+    conflict_task1 = Task(
+        task_id="T004",
+        name="Vet Visit",
+        duration=60,
+        priority="HIGH",
+        task_type="MEDICAL",
+        owner_id="O001",
+        pet_id="P001",
+        start_time="10:00",
+        due_date="2026-03-29"
+    )
+    conflict_task2 = Task(
+        task_id="T005",
+        name="Playtime",
+        duration=30,
+        priority="LOW",
+        task_type="PLAY",
+        owner_id="O001",
+        pet_id="P002",
+        start_time="10:00",
+        due_date="2026-03-29"
+    )
+
     schedule = Schedule(
         schedule_id="S001",
         owner_id="O001",
         pet_id="P001",
-        tasks=[task1, task2, task3],
+        tasks=[task3, task1, task2, conflict_task1, conflict_task2],  # Out of order, with conflict
         constraints={"max_duration": 120}
     )
 
-    # Generate and print today's schedule
-    schedule.generate_schedule()
-    print("Today's Schedule:")
-    print(schedule.explain_schedule())
+    print("Tasks before sorting by time:")
+    for t in schedule.tasks:
+        print(f"{t.name} at {t.start_time}")
+
+    # Sort by time
+    schedule.sort_by_time()
+    print("\nTasks after sorting by time:")
+    for t in schedule.tasks:
+        print(f"{t.name} at {t.start_time}")
+
+    # Lightweight conflict detection: print warning if conflicts found
+    conflicts = schedule.detect_time_conflicts()
+    if conflicts:
+        print("\nWARNING: The following tasks are scheduled at the same time:")
+        for conflict_group in conflicts:
+            conflict_names = ", ".join(f"{t.name} (Pet: {t.pet_id})" for t in conflict_group)
+            print(f"  - {conflict_names} at {conflict_group[0].start_time} on {conflict_group[0].due_date}")
+    else:
+        print("\nNo scheduling conflicts detected.")
+
+    # Mark one task as complete
+    schedule.tasks[0].mark_complete()
+
+    # Filtering by completion
+    completed_tasks = schedule.filter_tasks_by_completion(completed=True)
+    incomplete_tasks = schedule.filter_tasks_by_completion(completed=False)
+    print("\nCompleted tasks:")
+    for t in completed_tasks:
+        print(f"{t.name} at {t.start_time}")
+    print("\nIncomplete tasks:")
+    for t in incomplete_tasks:
+        print(f"{t.name} at {t.start_time}")
+
+    # Filtering by pet name
+    pet_store = [pet1, pet2]
+    luna_tasks = schedule.filter_tasks_by_pet_name("Luna", pet_store=pet_store)
+    print("\nTasks for Luna:")
+    for t in luna_tasks:
+        print(f"{t.name} at {t.start_time}")

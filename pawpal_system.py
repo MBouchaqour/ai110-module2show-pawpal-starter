@@ -85,6 +85,9 @@ class Task:
     completed: bool = False      # added — needed by mark_complete
     description: str = ""        # Added to store task description
     status: str = "incomplete"    # Added to track task status
+    start_time: str = ""         # New: Format "HH:MM"
+    recurrence: str = "none"      # New: "none", "daily", "weekly"
+    due_date: str = ""           # New: ISO date string (YYYY-MM-DD)
 
     def add_task(self, task_id, name, duration, priority, task_type, owner_id, pet_id):
         """Add a new task with the specified details."""
@@ -112,10 +115,48 @@ class Task:
         if pet_id:
             self.pet_id = pet_id
 
-    def mark_complete(self):
-        """Mark the task as complete."""
+    def mark_complete(self, schedule=None):
+        """
+        Mark the task as complete. If the task is recurring (daily or weekly), automatically create
+        a new instance for the next occurrence and add it to the provided schedule.
+        The new instance will have its due_date set to the next day or week, as appropriate.
+        """
         self.completed = True
         self.status = "complete"
+        if schedule and self.recurrence in ("daily", "weekly"):
+            from datetime import timedelta, date, datetime as dt
+            # Determine the current due date (today if not set)
+            if self.due_date:
+                try:
+                    current_due = dt.strptime(self.due_date, "%Y-%m-%d").date()
+                except Exception:
+                    current_due = date.today()
+            else:
+                current_due = date.today()
+            # Calculate next due date
+            if self.recurrence == "daily":
+                next_due = current_due + timedelta(days=1)
+            elif self.recurrence == "weekly":
+                next_due = current_due + timedelta(weeks=1)
+            else:
+                next_due = current_due
+            # For demo, just copy all fields and update task_id and due_date
+            new_task_id = f"{self.task_id}_{self.recurrence}_next"
+            new_task = Task(
+                task_id=new_task_id,
+                name=self.name,
+                duration=self.duration,
+                priority=self.priority,
+                task_type=self.task_type,
+                owner_id=self.owner_id,
+                pet_id=self.pet_id,
+                description=self.description,
+                start_time=self.start_time,
+                recurrence=self.recurrence,
+                due_date=next_due.isoformat()
+            )
+            if schedule:
+                schedule.add_task_to_schedule(new_task)
 
     def validate_task(self):
         """Validate the task's attributes for correctness."""
@@ -125,10 +166,72 @@ class Task:
             raise ValueError("Invalid priority.")
         if not self.name:
             raise ValueError("Task name cannot be empty.")
+        if self.start_time:
+            try:
+                datetime.strptime(self.start_time, "%H:%M")
+            except ValueError:
+                raise ValueError("start_time must be in 'HH:MM' format.")
 
 
 @dataclass
 class Schedule:
+
+    def detect_time_conflicts(self):
+        """
+        Detect tasks that are scheduled at the same start_time and due_date for the same or different pets.
+        Returns:
+            List[List[Task]]: A list of lists, where each sublist contains tasks that conflict (i.e., share the same time).
+        This lightweight strategy only checks for exact time matches, not overlapping durations.
+        """
+        conflicts = []
+        # Build a mapping: (start_time, due_date) -> list of tasks
+        time_map = {}
+        for t in self.tasks:
+            key = (t.start_time, t.due_date)
+            if key not in time_map:
+                time_map[key] = []
+            time_map[key].append(t)
+        # Find all keys with more than one task (conflict)
+        for key, task_list in time_map.items():
+            if len(task_list) > 1:
+                conflicts.append(task_list)
+        return conflicts
+
+            def mark_task_complete(self, task_id: str):
+                """
+                Mark a task as complete by its task_id and handle recurrence if needed.
+                If the task is recurring, a new instance for the next occurrence is automatically added.
+                Args:
+                    task_id (str): The ID of the task to mark as complete.
+                """
+                for t in self.tasks:
+                    if t.task_id == task_id:
+                        t.mark_complete(schedule=self)
+                        break
+        def filter_tasks_by_completion(self, completed: bool = True):
+            """
+            Return a list of tasks filtered by their completion status.
+            Args:
+                completed (bool): If True, return completed tasks; if False, return incomplete tasks.
+            Returns:
+                List[Task]: Filtered list of tasks.
+            """
+            return [t for t in self.tasks if t.completed == completed]
+
+        def filter_tasks_by_pet_name(self, pet_name: str, pet_store=None):
+            """
+            Return a list of tasks for a given pet name.
+            Args:
+                pet_name (str): The name of the pet to filter tasks for.
+                pet_store (list, optional): List of Pet objects to resolve pet_name to pet_id.
+            Returns:
+                List[Task]: Filtered list of tasks for the specified pet name.
+            """
+            if pet_store is None:
+                # If no pet_store provided, cannot resolve pet_name to pet_id
+                return []
+            pet_ids = [pet.pet_code for pet in pet_store if pet.name == pet_name]
+            return [t for t in self.tasks if t.pet_id in pet_ids]
     # ⚠️  FIX APPLIED: non-default fields moved above fields with defaults.
     # Original order caused TypeError: non-default argument after default argument.
     schedule_id: str
@@ -136,6 +239,12 @@ class Schedule:
     pet_id: str                  # FK → Pet.pet_code
     tasks: List[Task] = field(default_factory=list)
     constraints: dict = field(default_factory=dict)
+    def sort_by_time(self):
+        """
+        Sort tasks in the schedule by their start_time attribute (in HH:MM format).
+        Tasks without a start_time are sorted to the beginning.
+        """
+        self.tasks.sort(key=lambda t: datetime.strptime(t.start_time, "%H:%M") if t.start_time else datetime.min)
 
     def add_task_to_schedule(self, task: Task):
         """Add a task to the schedule."""
