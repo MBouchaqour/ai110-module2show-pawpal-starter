@@ -76,7 +76,13 @@
 
 - Did your design change during implementation?
 - If yes, describe at least one change and why you made it.
+The changes were made to:
 
+1. **Refactor `Owner`**: Converted it to a `dataclass` for consistency with other classes and to simplify initialization.
+2. **Enhance Relationships**: Added methods to manage connections between `Owner`, `Pet`, `Task`, and `Schedule` for better clarity and functionality.
+3. **Improve `Schedule`**: Added task and constraint management methods to make it more practical and aligned with real-world use cases.
+4. **Define Constraints**: Clarified the `constraints` attribute in `Schedule` to ensure structure and usability.
+5. **Task Management**: Added methods to add/remove tasks in `Schedule` for better control and flexibility.
 ---
 
 ## 2. Scheduling Logic and Tradeoffs

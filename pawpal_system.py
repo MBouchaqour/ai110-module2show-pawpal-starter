@@ -2,34 +2,27 @@
 
 from dataclasses import dataclass, field
 from typing import List, Optional
+from datetime import datetime
+
 
 @dataclass
 class Owner:
-    def __init__(self, owner_id, full_name, address, preferences, available_time, number_of_pets):
-        self.owner_id = owner_id
-        self.full_name = full_name
-        self.address = address
-        self.preferences = preferences
-        self.available_time = available_time
-        self.number_of_pets = number_of_pets
+    owner_id: str
+    full_name: str
+    address: str
+    preferences: str
+    available_time: str          # e.g. "07:00-22:00"
+    number_of_pets: int
 
-    def add_owner(self, owner_id, full_name, address):
-        pass  # Logic to add owner
+    def get_schedules(self):
+        """Retrieve schedules associated with the owner."""
+        # Placeholder: Replace with actual database or in-memory store lookup
+        return [schedule for schedule in SCHEDULE_STORE if schedule.owner_id == self.owner_id]
 
-    def add_preferences(self, preferences):
-        pass  # Logic to add preferences
-
-    def add_available_time(self, time_slots):
-        pass  # Logic to add available time
-
-    def update_preferences(self, preferences):
-        pass  # Logic to update preferences
-
-    def update_available_time(self, time_slots):
-        pass  # Logic to update available time
-
-    def get_preferences(self):
-        pass  # Logic to get preferences
+    def get_pets(self):
+        """Retrieve pets associated with the owner."""
+        # Placeholder: Replace with actual database or in-memory store lookup
+        return [pet for pet in PET_STORE if pet.owner_id == self.owner_id]
 
 
 @dataclass
@@ -39,60 +32,149 @@ class Pet:
     pet_type: str
     age: int
     comment: str
-    owner_id: str
+    owner_id: str                # FK → Owner.owner_id
+    tasks: list = field(default_factory=list)  # Updated to use default_factory for mutable default
+    species: str = ""  # Added to store pet species
 
-    def add_pet(self, pet_code, name, pet_type):
-        pass  # Logic to add pet
+    def add_pet(self, pet_code: str, name: str, pet_type: str):
+        """Add a new pet to the pet store."""
+        if not pet_code or not name:
+            raise ValueError("Pet code and name cannot be empty.")
+        if pet_type not in ["DOG", "CAT", "BIRD", "OTHER"]:
+            raise ValueError("Invalid pet type.")
+        PET_STORE.append(self)
 
-    def update_pet_info(self, pet_code, name=None, pet_type=None, age=None, comment=None):
-        pass  # Logic to update pet info
+    def update_pet_info(self, pet_code: str, name=None, pet_type=None, age=None, comment=None):
+        """Update information for an existing pet."""
+        if self.pet_code != pet_code:
+            return
+        if name:
+            self.name = name
+        if pet_type:
+            self.pet_type = pet_type
+        if age:
+            self.age = age
+        if comment:
+            self.comment = comment
 
     def validate_pet_info(self):
-        pass  # Logic to validate pet info
+        """Validate the pet's information for completeness and correctness."""
+        if not self.pet_code or not self.name:
+            raise ValueError("Pet code and name cannot be empty.")
+        if self.age < 0:
+            raise ValueError("Age cannot be negative.")
+        if self.pet_type not in ["DOG", "CAT", "BIRD", "OTHER"]:
+            raise ValueError("Invalid pet type.")
+
+    def add_task(self, task):
+        """Add a task to the pet's task list."""
+        if not isinstance(task, Task):
+            raise ValueError("Only Task objects can be added.")
+        self.tasks.append(task)
 
 
 @dataclass
 class Task:
     task_id: str
     name: str
-    duration: int
-    priority: str
-    task_type: str
-    owner_id: str
-    pet_id: str
+    duration: int                # minutes
+    priority: str                # "HIGH" | "MEDIUM" | "LOW"
+    task_type: str               # "WALK" | "FEED" | "MEDICATION" | "GROOMING" | etc.
+    owner_id: str                # FK → Owner.owner_id
+    pet_id: str                  # FK → Pet.pet_code
+    completed: bool = False      # added — needed by mark_complete
+    description: str = ""        # Added to store task description
+    status: str = "incomplete"    # Added to track task status
 
     def add_task(self, task_id, name, duration, priority, task_type, owner_id, pet_id):
-        pass  # Logic to add task
-
-    def edit_task(self, task_id, name=None, duration=None, priority=None, task_type=None, pet_id=None):
-        pass  # Logic to edit task
-
-    def mark_completed(self, task_id):
-        pass  # Logic to mark task as completed
-
-    def validate_task(self):
-        pass  # Logic to validate task
-
-
-class Schedule:
-    def __init__(self, schedule_id, tasks, constraints, owner_id, pet_id):
-        self.schedule_id = schedule_id
-        self.tasks = tasks
-        self.constraints = constraints
+        """Add a new task with the specified details."""
+        self.task_id = task_id
+        self.name = name
+        self.duration = duration
+        self.priority = priority
+        self.task_type = task_type
         self.owner_id = owner_id
         self.pet_id = pet_id
+        self.validate_task()
 
-    def add_task_to_schedule(self, schedule_id, task, pet_id):
-        pass  # Logic to add task to schedule
+    def edit_task(self, task_id, name=None, duration=None, priority=None, task_type=None, pet_id=None):
+        """Edit the details of an existing task."""
+        if self.task_id != task_id:
+            return
+        if name:
+            self.name = name
+        if duration:
+            self.duration = duration
+        if priority:
+            self.priority = priority
+        if task_type:
+            self.task_type = task_type
+        if pet_id:
+            self.pet_id = pet_id
 
-    def generate_schedule(self, schedule_id, pet_id):
-        pass  # Logic to generate schedule
+    def mark_complete(self):
+        """Mark the task as complete."""
+        self.completed = True
+        self.status = "complete"
 
-    def explain_schedule(self, schedule_id, pet_id):
-        pass  # Logic to explain schedule
+    def validate_task(self):
+        """Validate the task's attributes for correctness."""
+        if self.duration <= 0:
+            raise ValueError("Duration must be greater than 0.")
+        if self.priority not in ["HIGH", "MEDIUM", "LOW"]:
+            raise ValueError("Invalid priority.")
+        if not self.name:
+            raise ValueError("Task name cannot be empty.")
 
-    def resolve_conflicts(self, schedule_id, pet_id):
-        pass  # Logic to resolve conflicts
 
-    def handle_dynamic_updates(self, schedule_id, updated_task, pet_id):
-        pass  # Logic to handle dynamic updates
+@dataclass
+class Schedule:
+    # ⚠️  FIX APPLIED: non-default fields moved above fields with defaults.
+    # Original order caused TypeError: non-default argument after default argument.
+    schedule_id: str
+    owner_id: str                # FK → Owner.owner_id
+    pet_id: str                  # FK → Pet.pet_code
+    tasks: List[Task] = field(default_factory=list)
+    constraints: dict = field(default_factory=dict)
+
+    def add_task_to_schedule(self, task: Task):
+        """Add a task to the schedule."""
+        self.tasks.append(task)
+
+    def remove_task_from_schedule(self, task_id: str):
+        """Remove a task from the schedule by its ID."""
+        self.tasks = [t for t in self.tasks if t.task_id != task_id]
+
+    def generate_schedule(self):
+        """Generate a schedule by sorting tasks based on priority and duration."""
+        self.tasks.sort(key=lambda t: (t.priority, t.duration))
+        return self.tasks
+
+    def explain_schedule(self):
+        """Provide a textual explanation of the schedule."""
+        return "\n".join([f"Task {t.name} ({t.priority}) for {t.duration} minutes" for t in self.tasks])
+
+    def resolve_conflicts(self):
+        """Resolve conflicts in the schedule by adjusting task durations."""
+        for i in range(len(self.tasks) - 1):
+            current_task = self.tasks[i]
+            next_task = self.tasks[i + 1]
+            if current_task.duration > next_task.duration:
+                next_task.duration += 10  # Example conflict resolution
+
+    def handle_dynamic_updates(self, updated_task):
+        """Handle updates to tasks dynamically and resolve conflicts."""
+        for i, task in enumerate(self.tasks):
+            if task.task_id == updated_task.task_id:
+                self.tasks[i] = updated_task
+        self.resolve_conflicts()
+
+    def add_constraint(self, key: str, value):
+        """Add a constraint to the schedule."""
+        self.constraints[key] = value
+
+    def validate_constraints(self):
+        """Validate the constraints for correctness."""
+        for key, value in self.constraints.items():
+            if key == "max_duration" and value <= 0:
+                raise ValueError("Max duration must be greater than 0.")
