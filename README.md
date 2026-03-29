@@ -75,3 +75,29 @@ These tests cover:
 
 **Confidence Level:** ★★★★★ (5/5)  
 All tests pass, and key behaviors are verified, giving high confidence in the system’s reliability.
+
+Searched codebase for "Your README should act as a professional manual for your app.
+Use Copilot with #codebase to help draft a "Features" list that accurately describes the algorithms you implemented (e.g., "Sorting by time," "Conflict warnings," "Daily recurrence").", 3 results
+
+Here’s a professional “Features” list for your README that accurately describes the algorithms and logic implemented in your app:
+
+---
+
+## Features
+
+- **Chronological Task Sorting:** All tasks are automatically sorted by their scheduled time, ensuring a clear and organized daily plan.
+- **Conflict Detection & Warnings:** The scheduler detects and warns about any tasks scheduled at the exact same time, helping users avoid accidental overlaps for one or multiple pets.
+- **Recurring Task Automation:** When a daily or weekly task is marked complete, a new instance is automatically created for the next occurrence, with the due date set appropriately.
+- **Task Filtering:** Easily filter tasks by completion status (done/incomplete) or by pet name for focused task management.
+- **Priority-Based Scheduling:** The system considers task priority and duration to generate an optimal daily schedule.
+- **Constraint Validation:** Validates schedule constraints (such as maximum total duration) and task attributes to prevent invalid or conflicting entries.
+- **Dynamic Updates & Conflict Resolution:** Supports real-time updates to tasks and schedules, including automatic conflict resolution and schedule adjustments.
+- **User Feedback:** Provides clear, professional feedback in the UI for successful actions, warnings, and errors, making the app user-friendly and reliable.
+
+---
+
+This list highlights the core scheduling, sorting, recurrence, validation, and user experience features present in your codebase.
+
+## DEMO
+
+![PawPal App](Demo_1.png)

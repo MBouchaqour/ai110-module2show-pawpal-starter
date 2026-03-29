@@ -34,14 +34,16 @@ schedule = st.session_state.schedule
 # ---------------------------------------------------------------------------
 st.subheader("Owner & Pet Info")
 
+
 col1, col2 = st.columns(2)
 with col1:
     owner_name     = st.text_input("Owner name", value="Jordan")
     available_time = st.text_input("Available window", value="07:00-22:00")
 with col2:
     pet_name = st.text_input("Pet name", value="Mochi")
-    species  = st.selectbox("Species", ["dog", "cat", "rabbit", "other"])
+    species  = st.selectbox("Species", ["Dog", "Cat", "Bird", "Other"])
     pet_age  = st.number_input("Pet age (years)", min_value=0, max_value=30, value=3)
+
 
 if st.button("Save owner & pet"):
     # Step 1 — create Owner and store in vault (only if not already there)
@@ -55,11 +57,13 @@ if st.button("Save owner & pet"):
             number_of_pets=1,
         )
 
+
     # Step 2 — create Pet object
+    pet_type = species.upper()
     new_pet = Pet(
         pet_code=f"P{len(st.session_state.owner.get_pets() or []) + 1:03}",
         name=pet_name,
-        pet_type=species,
+        pet_type=pet_type,
         age=pet_age,
         comment="",
         owner_id=st.session_state.owner.owner_id,
@@ -79,9 +83,11 @@ if st.button("Save owner & pet"):
     pet   = st.session_state.pet
 
 # Show a status badge so the user can see what's in the vault
-if st.session_state.owner:
+if st.session_state.owner and st.session_state.pet:
     st.caption(f"🔒 Vault: Owner **{st.session_state.owner.full_name}** "
                f"+ Pet **{st.session_state.pet.name}** in session")
+elif st.session_state.owner:
+    st.caption(f"🔒 Vault: Owner **{st.session_state.owner.full_name}** in session (no pet yet)")
 else:
     st.caption("🔒 Vault: no owner saved yet — fill in the form above")
 
@@ -157,13 +163,14 @@ st.divider()
 # ---------------------------------------------------------------------------
 st.subheader("Build Schedule")
 
+
+# --- Updated: Use Schedule methods for sorting and conflict detection ---
 if st.button("Generate schedule"):
     if not st.session_state.owner or not st.session_state.pet:
         st.warning("Please save an owner & pet first.")
     elif not st.session_state.tasks:
         st.warning("Please add at least one task first.")
     else:
-        # Build a real Schedule object and store it in the vault
         sched = Schedule(
             schedule_id="S001",
             owner_id="001",
@@ -173,15 +180,46 @@ if st.button("Generate schedule"):
             sched.add_task_to_schedule(t)
 
         sched.generate_schedule()        # your scheduling logic runs here
+        sched.sort_by_time()             # ensure tasks are sorted chronologically
         st.session_state.schedule = sched
 
+
 if st.session_state.schedule:
+    # Conflict detection
+    conflicts = st.session_state.schedule.detect_time_conflicts()
+    if conflicts:
+        st.warning(f"⚠️ {len(conflicts)} time slot(s) have overlapping tasks. Please review:")
+        for conflict_group in conflicts:
+            st.table([
+                {
+                    "Task ID": t.task_id,
+                    "Task": t.name,
+                    "Pet ID": t.pet_id,
+                    "Start Time": t.start_time,
+                    "Due Date": t.due_date,
+                    "Priority": t.priority
+                }
+                for t in conflict_group
+            ])
+
     st.success("Schedule generated!")
+    # Show sorted schedule as a professional table
+    st.subheader("Sorted Schedule")
+    st.table([
+        {
+            "Task ID": t.task_id,
+            "Task": t.name,
+            "Pet ID": t.pet_id,
+            "Start Time": t.start_time,
+            "Due Date": t.due_date,
+            "Duration": f"{t.duration} min",
+            "Priority": t.priority,
+            "Done": "✓" if t.completed else "○",
+        }
+        for t in st.session_state.schedule.tasks
+    ])
     explanation = st.session_state.schedule.explain_schedule()
     if explanation:
         st.markdown(explanation)
     else:
         st.caption("explain_schedule() not yet implemented — add it in pawpal_system.py")
-    st.json(st.session_state.schedule.to_dict()
-            if hasattr(st.session_state.schedule, "to_dict")
-            else {"tasks": [t.name for t in st.session_state.schedule.tasks]})
