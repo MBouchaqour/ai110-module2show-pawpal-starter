@@ -50,3 +50,28 @@ pip install -r requirements.txt
 5. Add tests to verify key behaviors.
 6. Connect your logic to the Streamlit UI in `app.py`.
 7. Refine UML so it matches what you actually built.
+
+
+## Testing PawlPal+
+
+Here’s what you can add under the "Testing PawlPal+" section in your README.md:
+
+---
+
+## Testing PawlPal+
+
+To run the test suite, use the following command from the project root:
+
+```bash
+python -m pytest
+```
+
+These tests cover:
+- Task sorting: Ensures tasks are returned in chronological order.
+- Recurrence logic: Confirms that marking a daily or weekly task as complete creates a new task for the next occurrence.
+- Conflict detection: Verifies that the scheduler flags tasks scheduled at the exact same time.
+- Filtering: Checks filtering by completion status and pet name.
+- Edge cases: Includes scenarios like pets with no tasks, invalid times, and tasks with due dates in the past.
+
+**Confidence Level:** ★★★★★ (5/5)  
+All tests pass, and key behaviors are verified, giving high confidence in the system’s reliability.

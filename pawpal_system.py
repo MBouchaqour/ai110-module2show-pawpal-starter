@@ -197,41 +197,42 @@ class Schedule:
                 conflicts.append(task_list)
         return conflicts
 
-            def mark_task_complete(self, task_id: str):
-                """
-                Mark a task as complete by its task_id and handle recurrence if needed.
-                If the task is recurring, a new instance for the next occurrence is automatically added.
-                Args:
-                    task_id (str): The ID of the task to mark as complete.
-                """
-                for t in self.tasks:
-                    if t.task_id == task_id:
-                        t.mark_complete(schedule=self)
-                        break
-        def filter_tasks_by_completion(self, completed: bool = True):
-            """
-            Return a list of tasks filtered by their completion status.
-            Args:
-                completed (bool): If True, return completed tasks; if False, return incomplete tasks.
-            Returns:
-                List[Task]: Filtered list of tasks.
-            """
-            return [t for t in self.tasks if t.completed == completed]
+    def mark_task_complete(self, task_id: str):
+        """
+        Mark a task as complete by its task_id and handle recurrence if needed.
+        If the task is recurring, a new instance for the next occurrence is automatically added.
+        Args:
+            task_id (str): The ID of the task to mark as complete.
+        """
+        for t in self.tasks:
+            if t.task_id == task_id:
+                t.mark_complete(schedule=self)
+                break
 
-        def filter_tasks_by_pet_name(self, pet_name: str, pet_store=None):
-            """
-            Return a list of tasks for a given pet name.
-            Args:
-                pet_name (str): The name of the pet to filter tasks for.
-                pet_store (list, optional): List of Pet objects to resolve pet_name to pet_id.
-            Returns:
-                List[Task]: Filtered list of tasks for the specified pet name.
-            """
-            if pet_store is None:
-                # If no pet_store provided, cannot resolve pet_name to pet_id
-                return []
-            pet_ids = [pet.pet_code for pet in pet_store if pet.name == pet_name]
-            return [t for t in self.tasks if t.pet_id in pet_ids]
+    def filter_tasks_by_completion(self, completed: bool = True):
+        """
+        Return a list of tasks filtered by their completion status.
+        Args:
+            completed (bool): If True, return completed tasks; if False, return incomplete tasks.
+        Returns:
+            List[Task]: Filtered list of tasks.
+        """
+        return [t for t in self.tasks if t.completed == completed]
+
+    def filter_tasks_by_pet_name(self, pet_name: str, pet_store=None):
+        """
+        Return a list of tasks for a given pet name.
+        Args:
+            pet_name (str): The name of the pet to filter tasks for.
+            pet_store (list, optional): List of Pet objects to resolve pet_name to pet_id.
+        Returns:
+            List[Task]: Filtered list of tasks for the specified pet name.
+        """
+        if pet_store is None:
+            # If no pet_store provided, cannot resolve pet_name to pet_id
+            return []
+        pet_ids = [pet.pet_code for pet in pet_store if pet.name == pet_name]
+        return [t for t in self.tasks if t.pet_id in pet_ids]
     # ⚠️  FIX APPLIED: non-default fields moved above fields with defaults.
     # Original order caused TypeError: non-default argument after default argument.
     schedule_id: str
